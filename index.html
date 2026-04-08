@@ -78,6 +78,28 @@
             <div id="spending-chart" class="chart"></div>
           </article>
 
+          <article class="card notifications-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Notifications</p>
+                <h2>Unused for more than 3 weeks</h2>
+              </div>
+              <span class="badge" id="notification-count">0</span>
+            </div>
+            <div id="notification-list" class="notification-list"></div>
+          </article>
+
+          <article class="card monthly-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Monthly tracker</p>
+                <h2>Monthly subscriptions (rent, phone plan, etc.)</h2>
+              </div>
+              <span class="badge" id="monthly-subscription-total">€0.00</span>
+            </div>
+            <div id="monthly-subscription-list" class="monthly-subscription-list"></div>
+          </article>
+
           <article class="card table-card">
             <div class="card-head">
               <div>
@@ -108,7 +130,7 @@
             <div class="card-head">
               <div>
                 <p class="eyebrow">New subscription</p>
-                <h2>Describe and save a subscription</h2>
+                <h2 id="subscription-form-title">Describe and save a new subscription</h2>
               </div>
               <button class="secondary" id="back-dashboard" type="button">Back to dashboard</button>
             </div>
@@ -161,8 +183,12 @@
                   </select>
                 </label>
               </div>
+                <label class="checkbox-field">
+                  <input name="nonNegotiableMonthly" type="checkbox" />
+                  <span>Monthly non-negotiable payment (include in Monthly tracker)</span>
+                </label>
               <div class="hero-actions compact">
-                <button class="primary" type="submit">Save subscription</button>
+                <button class="primary" id="subscription-submit-button" type="submit">Save subscription</button>
                 <button class="secondary" id="cancel-add" type="button">Cancel</button>
               </div>
             </form>

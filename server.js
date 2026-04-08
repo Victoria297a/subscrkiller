@@ -267,6 +267,7 @@ app.get("/api/subscriptions", authMiddleware, async (req, res) => {
       category: row.category,
       lastOpened: row.lastOpened || "",
       usedThisMonth: Boolean(row.usedThisMonth),
+      isMonthlyNonNegotiable: Boolean(row.isMonthlyNonNegotiable),
       canceled: Boolean(row.canceled),
       source: row.source
     }))
@@ -290,6 +291,7 @@ app.put("/api/subscriptions/bulk", authMiddleware, async (req, res) => {
       category: String(subscription.category || "Other"),
       lastOpened: String(subscription.lastOpened || ""),
       usedThisMonth: Boolean(subscription.usedThisMonth),
+      isMonthlyNonNegotiable: Boolean(subscription.isMonthlyNonNegotiable),
       canceled: Boolean(subscription.canceled),
       source: String(subscription.source || "manual"),
       createdAt: now,

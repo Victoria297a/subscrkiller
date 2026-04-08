@@ -1,11 +1,13 @@
 const STORAGE_KEY = "subscrkiller-state-v3";
 const TOKEN_KEY = "subscrkiller-token";
 const API_BASE = window.location.protocol === "file:" ? "http://localhost:3000/api" : "/api";
+const UNUSED_NOTIFICATION_DAYS = 21;
 
 const runtime = {
   apiAvailable: false,
   token: localStorage.getItem(TOKEN_KEY) || "",
-  currentPage: "dashboard"
+  currentPage: "dashboard",
+  editingSubscriptionId: null
 };
 
 const state = loadState();
@@ -26,8 +28,14 @@ const elements = {
   cancelAdd: document.getElementById("cancel-add"),
   monthlyTotal: document.getElementById("monthly-total"),
   spendingChart: document.getElementById("spending-chart"),
+  notificationCount: document.getElementById("notification-count"),
+  notificationList: document.getElementById("notification-list"),
+  monthlySubscriptionTotal: document.getElementById("monthly-subscription-total"),
+  monthlySubscriptionList: document.getElementById("monthly-subscription-list"),
   subscriptionTable: document.getElementById("subscription-table"),
-  subscriptionForm: document.getElementById("subscription-form")
+  subscriptionForm: document.getElementById("subscription-form"),
+  subscriptionFormTitle: document.getElementById("subscription-form-title"),
+  subscriptionSubmitButton: document.getElementById("subscription-submit-button")
 };
 
 setupEventListeners();
@@ -54,15 +62,23 @@ function setupEventListeners() {
 
   elements.navButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      if (String(button.getAttribute("data-page-target") || "") === "add") {
+        resetSubscriptionFormState();
+      }
       setPage(String(button.getAttribute("data-page-target") || "dashboard"));
     });
   });
 
-  elements.gotoAdd.addEventListener("click", () => setPage("add"));
-  elements.backDashboard.addEventListener("click", () => setPage("dashboard"));
+  elements.gotoAdd.addEventListener("click", () => {
+    resetSubscriptionFormState();
+    setPage("add");
+  });
+  elements.backDashboard.addEventListener("click", () => {
+    resetSubscriptionFormState();
+    setPage("dashboard");
+  });
   elements.cancelAdd.addEventListener("click", () => {
-    elements.subscriptionForm.reset();
-    elements.subscriptionForm.elements.currency.value = "EUR";
+    resetSubscriptionFormState();
     setPage("dashboard");
   });
 
@@ -74,29 +90,67 @@ function setupEventListeners() {
     }
 
     const formData = new FormData(event.currentTarget);
+    const nonNegotiableMonthly = formData.get("nonNegotiableMonthly") === "on";
+    const existing = runtime.editingSubscriptionId
+      ? state.subscriptions.find((entry) => entry.id === runtime.editingSubscriptionId)
+      : null;
     const subscription = {
-      id: crypto.randomUUID(),
+      id: existing?.id || crypto.randomUUID(),
       name: String(formData.get("name") || "").trim(),
       price: Number(formData.get("price") || 0),
       currency: String(formData.get("currency") || "EUR").trim().toUpperCase(),
-      cycle: String(formData.get("cycle") || "monthly"),
+      cycle: nonNegotiableMonthly ? "monthly" : String(formData.get("cycle") || "monthly"),
       category: String(formData.get("category") || "Other").trim() || "Other",
       lastOpened: String(formData.get("lastOpened") || ""),
       usedThisMonth: String(formData.get("usedThisMonth") || "no") === "yes",
-      canceled: false,
-      source: "manual"
+      nonNegotiableMonthly,
+      canceled: existing ? Boolean(existing.canceled) : false,
+      source: existing?.source || "manual"
     };
 
     if (!subscription.name || !subscription.price) {
       return;
     }
 
-    state.subscriptions.unshift(subscription);
+    if (existing) {
+      state.subscriptions = state.subscriptions.map((entry) => (
+        entry.id === existing.id ? subscription : entry
+      ));
+    } else {
+      state.subscriptions.unshift(subscription);
+    }
     await saveAndSync();
-    event.currentTarget.reset();
-    event.currentTarget.elements.currency.value = "EUR";
+    resetSubscriptionFormState();
     setPage("dashboard");
   });
+}
+
+function resetSubscriptionFormState() {
+  runtime.editingSubscriptionId = null;
+  elements.subscriptionForm.reset();
+  elements.subscriptionForm.elements.currency.value = "EUR";
+  elements.subscriptionFormTitle.textContent = "Describe and save a subscription";
+  elements.subscriptionSubmitButton.textContent = "Save subscription";
+}
+
+function startEditingSubscription(id) {
+  const subscription = state.subscriptions.find((entry) => entry.id === id);
+  if (!subscription) {
+    return;
+  }
+
+  runtime.editingSubscriptionId = id;
+  elements.subscriptionForm.elements.name.value = subscription.name || "";
+  elements.subscriptionForm.elements.price.value = String(subscription.price || "");
+  elements.subscriptionForm.elements.currency.value = subscription.currency || "EUR";
+  elements.subscriptionForm.elements.cycle.value = subscription.cycle || "monthly";
+  elements.subscriptionForm.elements.category.value = subscription.category || "";
+  elements.subscriptionForm.elements.lastOpened.value = subscription.lastOpened || "";
+  elements.subscriptionForm.elements.usedThisMonth.value = subscription.usedThisMonth ? "yes" : "no";
+  elements.subscriptionForm.elements.nonNegotiableMonthly.checked = isMonthlyNonNegotiable(subscription);
+  elements.subscriptionFormTitle.textContent = "Edit subscription";
+  elements.subscriptionSubmitButton.textContent = "Update subscription";
+  setPage("add");
 }
 
 async function initApp() {
@@ -295,7 +349,73 @@ function render() {
   });
 
   renderChart();
+  renderNotifications();
+  renderMonthlySubscriptions();
   renderTable();
+}
+
+function renderNotifications() {
+  const notifications = state.subscriptions
+    .filter((subscription) => !subscription.canceled)
+    .map((subscription) => {
+      const inactivityDays = getInactivityDays(subscription.lastOpened);
+      return {
+        subscription,
+        inactivityDays
+      };
+    })
+    .filter((entry) => Number.isFinite(entry.inactivityDays) && entry.inactivityDays > UNUSED_NOTIFICATION_DAYS)
+    .sort((left, right) => right.inactivityDays - left.inactivityDays);
+
+  elements.notificationCount.textContent = String(notifications.length);
+
+  if (!notifications.length) {
+    elements.notificationList.innerHTML =
+      '<div class="notification-item">No inactivity alerts. Apps used in the last 3 weeks are considered healthy.</div>';
+    return;
+  }
+
+  elements.notificationList.innerHTML = notifications
+    .map(({ subscription, inactivityDays }) => `
+      <div class="notification-item warning">
+        <strong>${subscription.name}</strong>
+        <div class="hint">Not opened for ${inactivityDays} days. Last opened: ${subscription.lastOpened}.</div>
+      </div>
+    `)
+    .join("");
+}
+
+function renderMonthlySubscriptions() {
+  const monthlySubscriptions = state.subscriptions
+    .filter((subscription) => !subscription.canceled && isMonthlyNonNegotiable(subscription))
+    .sort((left, right) => monthlyCost(right) - monthlyCost(left));
+
+  const total = monthlySubscriptions.reduce((sum, subscription) => sum + monthlyCost(subscription), 0);
+  elements.monthlySubscriptionTotal.textContent = formatCurrency(total);
+
+  if (!monthlySubscriptions.length) {
+    elements.monthlySubscriptionList.innerHTML =
+      '<div class="monthly-item">No non-negotiable monthly subscriptions yet. Mark items like rent or phone plan in the add form.</div>';
+    return;
+  }
+
+  elements.monthlySubscriptionList.innerHTML = monthlySubscriptions
+    .map((subscription) => {
+      const lastOpened = subscription.lastOpened || "Not set";
+      const category = normalizeCategory(subscription.category);
+      return `
+        <div class="monthly-item">
+          <strong>${subscription.name}</strong>
+          <span>${formatCurrency(monthlyCost(subscription), subscription.currency)} / month</span>
+          <span class="hint">Category: ${category} • Last opened: ${lastOpened}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function isMonthlyNonNegotiable(subscription) {
+  return Boolean(subscription.nonNegotiableMonthly || subscription.isMonthlyNonNegotiable);
 }
 
 function renderChart() {
@@ -346,7 +466,9 @@ function renderChart() {
 }
 
 function renderTable() {
-  const rows = [...state.subscriptions].sort((a, b) => monthlyCost(b) - monthlyCost(a));
+  const rows = [...state.subscriptions]
+    .filter((subscription) => !isMonthlyNonNegotiable(subscription))
+    .sort((a, b) => monthlyCost(b) - monthlyCost(a));
 
   if (!rows.length) {
     elements.subscriptionTable.innerHTML =
@@ -363,16 +485,29 @@ function renderTable() {
           <td>${formatCurrency(subscription.price, subscription.currency)}</td>
           <td>${lastOpened}</td>
           <td>${normalizeCategory(subscription.category)}</td>
-          <td><button class="remove-button" data-remove="${subscription.id}" type="button">Delete</button></td>
+          <td>
+            <button class="edit-button" data-edit="${subscription.id}" type="button">Edit</button>
+            <button class="remove-button" data-remove="${subscription.id}" type="button">Delete</button>
+          </td>
         </tr>
       `;
     })
     .join("");
 
+  elements.subscriptionTable.querySelectorAll("[data-edit]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.getAttribute("data-edit");
+      startEditingSubscription(id);
+    });
+  });
+
   elements.subscriptionTable.querySelectorAll("[data-remove]").forEach((button) => {
     button.addEventListener("click", async () => {
       const id = button.getAttribute("data-remove");
       state.subscriptions = state.subscriptions.filter((subscription) => subscription.id !== id);
+      if (runtime.editingSubscriptionId === id) {
+        resetSubscriptionFormState();
+      }
       await saveAndSync();
     });
   });
@@ -413,6 +548,20 @@ function monthlyCost(subscription) {
     default:
       return amount;
   }
+}
+
+function getInactivityDays(lastOpened) {
+  if (!lastOpened) {
+    return null;
+  }
+
+  const opened = new Date(lastOpened);
+  if (Number.isNaN(opened.getTime())) {
+    return null;
+  }
+
+  const now = new Date();
+  return Math.floor((now - opened) / 86400000);
 }
 
 function formatCurrency(value, currency = "EUR") {

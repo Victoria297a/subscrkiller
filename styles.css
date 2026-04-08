@@ -169,6 +169,8 @@ th {
 
 .form-card,
 .chart-card,
+.notifications-card,
+.monthly-card,
 .table-card {
   padding: 24px;
 }
@@ -220,6 +222,25 @@ select:focus,
 textarea:focus {
   border-color: rgba(47, 121, 255, 0.56);
   box-shadow: 0 0 0 4px rgba(47, 121, 255, 0.12);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent-2);
+}
+
+.checkbox-field span {
+  color: var(--text);
 }
 
 .hero-actions {
@@ -322,6 +343,37 @@ textarea:focus {
   overflow-x: auto;
 }
 
+.notification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notification-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 63, 0.1);
+}
+
+.notification-item.warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.monthly-subscription-list {
+  display: grid;
+  gap: 10px;
+}
+
+.monthly-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 63, 0.1);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -335,9 +387,19 @@ td {
   vertical-align: top;
 }
 
+.edit-button,
 .remove-button {
   padding: 10px 12px;
   border-radius: 12px;
+  margin-right: 8px;
+}
+
+.edit-button {
+  background: rgba(47, 121, 255, 0.14);
+  color: #1d4ed8;
+}
+
+.remove-button {
   background: rgba(239, 68, 68, 0.12);
   color: #b4233f;
 }
@@ -412,6 +474,8 @@ td {
   .auth-card,
   .form-card,
   .chart-card,
+  .notifications-card,
+  .monthly-card,
   .table-card,
   .app-header {
     padding: 18px;
