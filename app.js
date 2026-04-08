@@ -421,7 +421,7 @@ function isMonthlyNonNegotiable(subscription) {
 function renderChart() {
   const grouped = groupByTheme(state.subscriptions);
   const monthlyTotal = grouped.reduce((sum, item) => sum + item.total, 0);
-  const pieColors = ["#2f79ff", "#0aa7a0", "#f59e0b", "#64748b", "#ef4444", "#8b5cf6", "#14b8a6", "#f97316"];
+  const pieColors = ["#a7a9b8", "#efc7d4", "#c5bddf", "#98a0c7", "#d5c9b8", "#b8c9c0", "#d7bfc7", "#9e93c8"];
 
   elements.monthlyTotal.textContent = `${formatCurrency(monthlyTotal)} / month`;
 
@@ -472,24 +472,30 @@ function renderTable() {
 
   if (!rows.length) {
     elements.subscriptionTable.innerHTML =
-      '<tr><td colspan="5">No subscriptions yet. Use "Add subscription" to create your first one.</td></tr>';
+      '<div class="empty-subscription-state">No subscriptions yet. Use "Add service" to create your first one.</div>';
     return;
   }
 
   elements.subscriptionTable.innerHTML = rows
     .map((subscription) => {
       const lastOpened = subscription.lastOpened || "Never";
+      const monthlyPrice = formatCurrency(monthlyCost(subscription), subscription.currency);
       return `
-        <tr>
-          <td>${subscription.name}</td>
-          <td>${formatCurrency(subscription.price, subscription.currency)}</td>
-          <td>${lastOpened}</td>
-          <td>${normalizeCategory(subscription.category)}</td>
-          <td>
+        <article class="subscription-card">
+          <div class="subscription-head">
+            <span class="subscription-name">${subscription.name}</span>
+            <span class="badge">${normalizeCategory(subscription.category)}</span>
+          </div>
+          <div class="subscription-price">${monthlyPrice}</div>
+          <div class="subscription-meta">
+            <span>Last opened: ${lastOpened}</span>
+            <span>Cycle: ${subscription.cycle}</span>
+          </div>
+          <div class="subscription-actions">
             <button class="edit-button" data-edit="${subscription.id}" type="button">Edit</button>
             <button class="remove-button" data-remove="${subscription.id}" type="button">Delete</button>
-          </td>
-        </tr>
+          </div>
+        </article>
       `;
     })
     .join("");

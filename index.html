@@ -53,47 +53,53 @@
       </section>
 
       <section id="app-view" class="hidden">
-        <header class="card app-header">
+        <header class="app-header">
+          <div class="brand-mark">G</div>
           <div>
-            <p class="eyebrow">Welcome</p>
-            <h2 id="user-greeting">Your subscriptions</h2>
-            <p class="hint">Track where your money goes every month.</p>
+            <h2 class="brand-title">Ghost Ledger</h2>
+            <p id="user-greeting" class="hint">Your subscriptions</p>
           </div>
-          <nav class="top-nav" aria-label="Main navigation">
-            <button class="nav-button active" data-page-target="dashboard" type="button">Dashboard</button>
-            <button class="nav-button" data-page-target="add" type="button">Add subscription</button>
-            <button class="secondary" id="logout-button" type="button">Sign out</button>
-          </nav>
+          <button class="icon-button" id="logout-button" type="button" aria-label="Sign out">⎋</button>
         </header>
 
+        <nav class="top-nav" aria-label="Main navigation">
+          <button class="nav-button active" data-page-target="dashboard" type="button">Overview</button>
+          <button class="nav-button" data-page-target="add" type="button">Add</button>
+        </nav>
+
         <section id="page-dashboard" class="page-view">
-          <article class="card chart-card">
-            <div class="card-head">
-              <div>
-                <p class="eyebrow">Diagram</p>
-                <h2>Subscriptions by theme</h2>
-              </div>
-              <span class="badge" id="monthly-total">€0.00 / month</span>
-            </div>
-            <div id="spending-chart" class="chart"></div>
+          <article class="hero-metric">
+            <p class="eyebrow">Monthly exposure</p>
+            <div id="monthly-total" class="hero-amount">€0.00 / month</div>
+            <p class="hint">Predicted outflow based on active subscriptions</p>
           </article>
 
-          <article class="card notifications-card">
+          <article class="card notifications-card featured-alert">
             <div class="card-head">
               <div>
-                <p class="eyebrow">Notifications</p>
-                <h2>Unused for more than 3 weeks</h2>
+                <p class="eyebrow">Vampire drain detector</p>
+                <h2>Unused for over 3 weeks</h2>
               </div>
               <span class="badge" id="notification-count">0</span>
             </div>
             <div id="notification-list" class="notification-list"></div>
           </article>
 
+          <article class="card chart-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Allocation</p>
+                <h2>Spend by category</h2>
+              </div>
+            </div>
+            <div id="spending-chart" class="chart"></div>
+          </article>
+
           <article class="card monthly-card">
             <div class="card-head">
               <div>
-                <p class="eyebrow">Monthly tracker</p>
-                <h2>Monthly subscriptions (rent, phone plan, etc.)</h2>
+                <p class="eyebrow">Active commitments</p>
+                <h2>Non negotiable monthly costs</h2>
               </div>
               <span class="badge" id="monthly-subscription-total">€0.00</span>
             </div>
@@ -103,25 +109,12 @@
           <article class="card table-card">
             <div class="card-head">
               <div>
-                <p class="eyebrow">List</p>
-                <h2>Your subscriptions</h2>
+                <p class="eyebrow">Subscriptions</p>
+                <h2>Manage recurring apps</h2>
               </div>
-              <button class="primary" id="goto-add" type="button">Add new subscription</button>
+              <button class="primary" id="goto-add" type="button">Add service</button>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>App</th>
-                    <th>Amount</th>
-                    <th>Last opened</th>
-                    <th>Theme</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="subscription-table"></tbody>
-              </table>
-            </div>
+            <div id="subscription-table" class="subscription-list"></div>
           </article>
         </section>
 
