@@ -6,7 +6,7 @@
     <title>Subscription Killer</title>
     <meta
       name="description"
-      content="Track subscriptions, expose waste, and get guilt-based nudges to cancel what you never use."
+      content="Sign in, view your subscription categories, and manage recurring services from one dashboard."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,285 +23,151 @@
     <div class="bg-grid"></div>
 
     <main class="shell">
-      <section class="hero card">
-        <div>
+      <section id="auth-view" class="card auth-card">
+        <div class="auth-copy">
           <p class="eyebrow">Subscription Killer</p>
-          <h1>Find the money leaking out of your monthly life.</h1>
+          <h1>Sign in to access your subscription dashboard.</h1>
           <p class="lead">
-            Track subscriptions, detect recurring payments from bank imports, and get hard-to-ignore nudges like:
-            “You paid €9.99 for this and didn’t open it once this month.”
+            Start with account login. Once signed in, your subscriptions are saved to MongoDB and synced to your profile.
           </p>
-          <div class="hero-actions">
-            <button class="primary" data-jump="add-form">Add subscription</button>
-            <button class="secondary" data-jump="import-form">Import bank activity</button>
-          </div>
+          <p id="backend-status" class="hint"></p>
         </div>
-        <div class="hero-stats">
-          <div class="stat accent">
-            <span>Total monthly waste</span>
-            <strong id="monthly-waste">€0.00</strong>
-          </div>
-          <div class="stat">
-            <span>Unused this month</span>
-            <strong id="unused-count">0</strong>
-          </div>
-          <div class="stat">
-            <span>Potential annual loss</span>
-            <strong id="annual-waste">€0.00</strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel-grid">
-        <article class="card form-card" id="add-form">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Manual tracking</p>
-              <h2>Add a subscription</h2>
-            </div>
-            <span class="badge" id="storage-mode-badge">Local only</span>
-          </div>
-          <form id="subscription-form" class="stack">
-            <label>
-              Service
-              <input name="name" placeholder="Netflix, Adobe, Notion..." required />
-            </label>
-            <div class="split">
-              <label>
-                Price
-                <input name="price" type="number" step="0.01" min="0.01" placeholder="9.99" required />
-              </label>
-              <label>
-                Currency
-                <input name="currency" value="EUR" maxlength="3" />
-              </label>
-            </div>
-            <div class="split">
-              <label>
-                Billing cycle
-                <select name="cycle">
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-              </label>
-              <label>
-                Category
-                <input name="category" placeholder="Entertainment, Work, Fitness" />
-              </label>
-            </div>
-            <div class="split">
-              <label>
-                Last opened
-                <input name="lastOpened" type="date" />
-              </label>
-              <label>
-                Used this month
-                <select name="usedThisMonth">
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
-                </select>
-              </label>
-            </div>
-            <button class="primary" type="submit">Track subscription</button>
-          </form>
-        </article>
-
-        <article class="card form-card" id="import-form">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Bank sync</p>
-              <h2>Import recurring transactions</h2>
-            </div>
-            <span class="badge ghost">CSV / pasted lines</span>
-          </div>
-          <div class="stack">
-            <label>
-              Paste CSV or statement lines
-              <textarea id="transaction-input" rows="10" placeholder="date,merchant,amount\n2026-04-01,Spotify,9.99\n2026-03-01,Spotify,9.99"></textarea>
-            </label>
-            <div class="hero-actions compact">
-              <button class="primary" id="import-button" type="button">Detect subscriptions</button>
-              <button class="secondary" id="load-demo" type="button">Load demo data</button>
-            </div>
-            <p class="hint">
-              Use dates plus merchant names. The app will flag repeating charges that look like subscriptions.
-            </p>
-          </div>
-        </article>
-      </section>
-
-      <section class="panel-grid">
-        <article class="card form-card" id="account-form">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Identity + security</p>
-              <h2>User account</h2>
-            </div>
-            <span class="badge ghost" id="auth-state">Guest mode</span>
-          </div>
-          <form id="register-form" class="stack">
-            <label>
-              Full name
-              <input name="name" placeholder="Victoria" required />
-            </label>
-            <label>
-              Email
-              <input name="email" type="email" placeholder="you@email.com" required />
-            </label>
-            <label>
-              Password
-              <input name="password" type="password" minlength="8" placeholder="At least 8 chars" required />
-            </label>
-            <div class="hero-actions compact">
-              <button class="primary" type="submit">Create account</button>
-              <button class="secondary" id="login-button" type="button">Sign in</button>
-              <button class="secondary" id="logout-button" type="button">Sign out</button>
-            </div>
-          </form>
-          <div class="stack top-gap">
-            <label>
-              Profile picture
-              <input id="avatar-input" type="file" accept="image/*" />
-            </label>
-            <button class="secondary" id="upload-avatar" type="button">Upload avatar</button>
-            <div class="avatar-row">
-              <img id="avatar-preview" class="avatar-preview" alt="Avatar preview" />
-              <div id="account-copy" class="hint">No account connected yet.</div>
-            </div>
-          </div>
-        </article>
-
-        <article class="card form-card" id="bank-form">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Bank + money storage</p>
-              <h2>Secure bank snapshot</h2>
-            </div>
-            <span class="badge ghost">Encrypted at rest</span>
-          </div>
-          <form id="bank-record-form" class="stack">
-            <label>
-              Bank name
-              <input name="bankName" placeholder="Revolut, N26, Chase" required />
-            </label>
-            <label>
-              Account label
-              <input name="accountLabel" placeholder="Main card" required />
-            </label>
-            <div class="split">
-              <label>
-                IBAN / account ref
-                <input name="iban" placeholder="DE89..." required />
-              </label>
-              <label>
-                Balance
-                <input name="balance" type="number" step="0.01" placeholder="1000" required />
-              </label>
-            </div>
-            <label>
-              Currency
-              <input name="currency" value="EUR" maxlength="3" />
-            </label>
-            <button class="primary" type="submit">Save secure bank record</button>
-          </form>
-          <div id="bank-records" class="alert-list top-gap"></div>
-        </article>
-      </section>
-
-      <section class="card insights-card">
-        <div class="card-head">
-          <div>
-            <p class="eyebrow">Psychological pressure</p>
-            <h2>Unused subscription alerts</h2>
-          </div>
-          <span class="badge warning" id="alert-badge">0 alerts</span>
-        </div>
-        <div id="alert-list" class="alert-list"></div>
-      </section>
-
-      <section class="card insights-card" id="rewards">
-        <div class="card-head">
-          <div>
-            <p class="eyebrow">Rewards + projection</p>
-            <h2>Savings bonus engine</h2>
-          </div>
-          <span class="badge" id="voucher-badge">0 vouchers</span>
-        </div>
-        <div class="split">
-          <div class="alert">
-            <strong id="saved-monthly">€0 saved / month</strong>
-            <div class="alert-copy" id="voucher-copy">Every €10 saved unlocks a shopping voucher.</div>
-          </div>
-          <div class="alert">
-            <strong id="goal-title">iPhone projection</strong>
-            <div class="alert-copy" id="goal-copy">Cancel a subscription to see how quickly your savings hit a big target.</div>
-          </div>
-        </div>
-        <form id="reward-settings-form" class="stack top-gap">
-          <div class="split">
-            <label>
-              Voucher step (€)
-              <input name="voucherStep" type="number" min="1" value="10" required />
-            </label>
-            <label>
-              Goal price (€)
-              <input name="goalPrice" type="number" min="50" value="1200" required />
-            </label>
-          </div>
+        <form id="auth-form" class="stack auth-form">
           <label>
-            Goal name
-            <input name="goalName" value="new iPhone" required />
+            Full name
+            <input name="name" placeholder="Victoria" required />
           </label>
-          <button class="secondary" type="submit">Update reward settings</button>
+          <label>
+            Email
+            <input name="email" type="email" placeholder="you@email.com" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" minlength="8" placeholder="At least 8 chars" required />
+          </label>
+          <div class="hero-actions compact">
+            <button class="primary" id="register-button" type="submit">Create account</button>
+            <button class="secondary" id="login-button" type="button">Sign in</button>
+          </div>
         </form>
       </section>
 
-      <section class="dashboard-grid">
-        <article class="card chart-card">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Spending visualization</p>
-              <h2>Monthly waste breakdown</h2>
-            </div>
-          </div>
-          <div id="spending-chart" class="chart"></div>
-        </article>
-
-        <article class="card coach-card">
-          <div class="card-head">
-            <div>
-              <p class="eyebrow">Cancel coach</p>
-              <h2>One-click cancel guidance</h2>
-            </div>
-          </div>
-          <div id="cancel-coach" class="coach-list"></div>
-        </article>
-      </section>
-
-      <section class="card table-card">
-        <div class="card-head">
+      <section id="app-view" class="hidden">
+        <header class="card app-header">
           <div>
-            <p class="eyebrow">Tracked subscriptions</p>
-            <h2>Your recurring charges</h2>
+            <p class="eyebrow">Welcome</p>
+            <h2 id="user-greeting">Your subscriptions</h2>
+            <p class="hint">Track where your money goes every month.</p>
           </div>
-          <button class="secondary" id="clear-all" type="button">Clear all data</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Service</th>
-                <th>Price</th>
-                <th>Cycle</th>
-                <th>Status</th>
-                <th>Waste</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="subscription-table"></tbody>
-          </table>
-        </div>
+          <nav class="top-nav" aria-label="Main navigation">
+            <button class="nav-button active" data-page-target="dashboard" type="button">Dashboard</button>
+            <button class="nav-button" data-page-target="add" type="button">Add subscription</button>
+            <button class="secondary" id="logout-button" type="button">Sign out</button>
+          </nav>
+        </header>
+
+        <section id="page-dashboard" class="page-view">
+          <article class="card chart-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Diagram</p>
+                <h2>Subscriptions by theme</h2>
+              </div>
+              <span class="badge" id="monthly-total">€0.00 / month</span>
+            </div>
+            <div id="spending-chart" class="chart"></div>
+          </article>
+
+          <article class="card table-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">List</p>
+                <h2>Your subscriptions</h2>
+              </div>
+              <button class="primary" id="goto-add" type="button">Add new subscription</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>App</th>
+                    <th>Amount</th>
+                    <th>Last opened</th>
+                    <th>Theme</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="subscription-table"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="page-add" class="page-view hidden">
+          <article class="card form-card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">New subscription</p>
+                <h2>Describe and save a subscription</h2>
+              </div>
+              <button class="secondary" id="back-dashboard" type="button">Back to dashboard</button>
+            </div>
+            <form id="subscription-form" class="stack">
+              <label>
+                App / service name
+                <input name="name" placeholder="Netflix, Nike Run Club, Amazon Prime" required />
+              </label>
+              <div class="split">
+                <label>
+                  Amount
+                  <input name="price" type="number" step="0.01" min="0.01" placeholder="9.99" required />
+                </label>
+                <label>
+                  Currency
+                  <input name="currency" value="EUR" maxlength="3" />
+                </label>
+              </div>
+              <div class="split">
+                <label>
+                  Billing cycle
+                  <select name="cycle">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </label>
+                <label>
+                  Theme
+                  <input name="category" list="category-suggestions" placeholder="Entertainment, Music, Sport..." />
+                  <datalist id="category-suggestions">
+                    <option value="Entertainment"></option>
+                    <option value="Music"></option>
+                    <option value="Sport"></option>
+                    <option value="Shopping"></option>
+                    <option value="Other"></option>
+                  </datalist>
+                </label>
+              </div>
+              <div class="split">
+                <label>
+                  Last opened
+                  <input name="lastOpened" type="date" />
+                </label>
+                <label>
+                  Used this month
+                  <select name="usedThisMonth">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </label>
+              </div>
+              <div class="hero-actions compact">
+                <button class="primary" type="submit">Save subscription</button>
+                <button class="secondary" id="cancel-add" type="button">Cancel</button>
+              </div>
+            </form>
+          </article>
+        </section>
       </section>
     </main>
   </body>
