@@ -16,7 +16,7 @@ A subscription control app with a bright frontend plus a secure Node.js backend 
 - User accounts (register/login)
 - Profile picture uploads
 - Secure backend storage for subscriptions and bank records
-- Encrypted-at-rest sensitive fields (`IBAN`, `balance`) in SQLite
+- Encrypted-at-rest sensitive fields (`IBAN`, `balance`) in MongoDB
 - Local fallback mode when backend is not running
 
 ## Security Notes
@@ -25,6 +25,7 @@ A subscription control app with a bright frontend plus a secure Node.js backend 
 - Auth uses signed JWT tokens.
 - Sensitive bank data is encrypted with `AES-256-GCM` before database storage.
 - Set strong `JWT_SECRET` and `DATA_ENCRYPTION_KEY` values in production.
+- Configure `MONGODB_URI` and `MONGODB_DB` for your MongoDB instance.
 
 ## Setup
 
@@ -46,7 +47,9 @@ Copy-Item .env.example .env
 npm start
 ```
 
-4. Open `http://localhost:3000`.
+4. Ensure MongoDB is running and reachable by your configured URI.
+
+5. Open `http://localhost:3000`.
 
 ## Run
 
@@ -56,4 +59,4 @@ npm start
 ## Notes
 
 - Imported transactions should include at least date, merchant, and amount columns.
-- Files and database in `uploads/` and `data/` are ignored by git.
+- Files in `uploads/` are ignored by git.
